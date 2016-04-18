@@ -1,5 +1,10 @@
 '''Python module to work with the Zenoss JSON API
+
+[modification] Steve Goossens: 
+* added authentication by client cert
+* changed __init__ constructor to take kwargs (to allow auth by username/password or cert)
 '''
+
 import ast
 import re
 import json
@@ -31,11 +36,21 @@ class ZenossException(Exception):
 class Zenoss(object):
     '''A class that represents a connection to a Zenoss server
     '''
-    def __init__(self, host, username, password, ssl_verify=True):
-        self.__host = host
+    def __init__(self, **kwargs):
+        self.__host = kwargs['host']
         self.__session = requests.Session()
-        self.__session.auth = (username, password)
-        self.__session.verify = ssl_verify
+        # auth by username/password or client cert
+        if 'username' in kwargs and 'password' in kwargs:
+            self.__session.auth = (kwargs['username'], kwargs['password'])
+        elif 'cert' in kwargs:
+            self.__session.cert = kwargs['cert']
+        else:
+            self.__session.auth = None
+        # host SSL verification enable/disabled
+        if 'ssl_verify' in kwargs:
+            self.__session.verify = kwargs['ssl_verify']
+        else:
+            self.__session.verify = True
         self.__req_count = 0
 
     def __router_request(self, router, method, data=None):
