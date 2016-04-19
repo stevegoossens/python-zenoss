@@ -15,6 +15,4 @@ events =  zenoss.get_events(
         params = dict(severity=[5], eventState=[0,1,3,4,5,6], Systems='/ReleaseEnvironment/Live')
             )
 
-print 'totalCount:', events['totalCount']
-print 'len(events):', len(events['events'])
-print 'success:', events['success']
+print 'len(events):', len(events)

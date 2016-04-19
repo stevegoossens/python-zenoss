@@ -267,8 +267,8 @@ class Zenoss(object):
                     log.info('Getting events for %s', data)
                     temp_response = self.__router_request('EventsRouter', 'query', [data])
                     # add events to initial response
-                    response['events'] += temp_response ['events']
-            return response
+                    response['events'] += temp_response['events']
+            return response['events']
         else:
             return "Error " + response['msg'] if 'msg' in response else ""
         #return self.__router_request('EventsRouter', 'query', [data])

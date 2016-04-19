@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/env python
 
 from zenoss import Zenoss
 
@@ -9,4 +9,5 @@ zenoss = Zenoss(
             ssl_verify = False
             )
 
+# I just used an existing event to test the connection as working
 print zenoss.get_event_detail("e4115bd1-2290-a6f3-11e6-0568d53d97e4")
