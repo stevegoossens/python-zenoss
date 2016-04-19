@@ -2,7 +2,11 @@
 
 [modification] Steve Goossens: 
 * added authentication by client cert
-* changed __init__ constructor to take kwargs (to allow auth by username/password or cert)
+* changed __init__ constructor to take kwargs (to allow auth by 
+  username/password or cert)
+* changed get_events method to kwargs (to allow query params and other values)
+* changed get_events method to call API iteratively to get events in batches
+  if there is a server-imposed query limit
 '''
 
 import ast
@@ -233,20 +237,41 @@ class Zenoss(object):
         data = dict(uids=[device['uid']], hashcheck=device['hash'], ip=ip_address)
         return self.__router_request('DeviceRouter', 'resetIp', [data])
 
-    def get_events(self, device=None, limit=100, component=None, event_class=None):
+    #def get_events(self, device=None, limit=100, component=None, event_class=None):
+    def get_events(self, **kwargs):
         '''Find current events.
 
         '''
-        data = dict(start=0, limit=limit, dir='DESC', sort='severity')
-        data['params'] = dict(severity=[5, 4, 3, 2], eventState=[0, 1])
-        if device:
-            data['params']['device'] = device
-        if component:
-            data['params']['component'] = component
-        if event_class:
-            data['params']['eventClass'] = event_class
+        data = dict(
+                    start = kwargs['start'] if 'start' in kwargs else 0,
+                    limit = kwargs['limit'] if 'limit' in kwargs else 1000,
+                    dir = kwargs['dir'] if 'dir' in 'kwargs' else 'ASC',
+                    sort = kwargs['sort'] if 'sort' in kwargs else 'firstTime'
+                    )
+        data['params'] = kwargs['params'] if 'params' in kwargs else \
+                dict(severity=[5, 4, 3, 2], eventState=[0, 1])
         log.info('Getting events for %s', data)
-        return self.__router_request('EventsRouter', 'query', [data])['events']
+        response = self.__router_request('EventsRouter', 'query', [data])
+        if 'success' in response and response['success'] == True:
+            result_total_count = response['totalCount']
+            result_count_in_initial_response = len(response['events'])
+            # if the number of results is less than the limit requested
+            # and there are more total events available
+            if result_count_in_initial_response < data['limit'] and result_total_count > result_count_in_initial_response:
+                # iterate through remaining results in batches
+                quotient = result_total_count / result_count_in_initial_response
+                for i in range(0, quotient):
+                    data['start'] = (i + 1) * result_count_in_initial_response
+                    data['limit'] = result_count_in_initial_response
+                    # store additional query result temporarily
+                    log.info('Getting events for %s', data)
+                    temp_response = self.__router_request('EventsRouter', 'query', [data])
+                    # add events to initial response
+                    response['events'] += temp_response ['events']
+            return response
+        else:
+            return "Error " + response['msg'] if 'msg' in response else ""
+        #return self.__router_request('EventsRouter', 'query', [data])
 
     def get_event_detail(self, event_id):
         '''Find specific event details
