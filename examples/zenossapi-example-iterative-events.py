@@ -4,7 +4,7 @@ from zenoss import Zenoss
 import logging
 logging.basicConfig(
         filename='/var/log/python-zenoss.log',level=logging.INFO,
-        format='%(asctime)s %(message)s'
+        format='%(asctime)s %(levelname)s %(message)s'
         )
 
 HOST = 'https://server.domain.com'
