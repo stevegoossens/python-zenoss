@@ -237,7 +237,6 @@ class Zenoss(object):
         data = dict(uids=[device['uid']], hashcheck=device['hash'], ip=ip_address)
         return self.__router_request('DeviceRouter', 'resetIp', [data])
 
-    #def get_events(self, device=None, limit=100, component=None, event_class=None):
     def get_events(self, **kwargs):
         '''Find current events.
 
@@ -255,6 +254,8 @@ class Zenoss(object):
         if 'success' in response and response['success'] == True:
             result_total_count = response['totalCount']
             result_count_in_initial_response = len(response['events'])
+            log.info('%s events received, %s requested, %s events available',
+                    result_count_in_initial_response, data['limit'], result_total_count)
             # if the number of results is less than the limit requested
             # and there are more total events available
             if result_count_in_initial_response < data['limit'] and result_total_count > result_count_in_initial_response:
@@ -268,10 +269,12 @@ class Zenoss(object):
                     temp_response = self.__router_request('EventsRouter', 'query', [data])
                     # add events to initial response
                     response['events'] += temp_response['events']
+                    log.info('Events received: %s (iteration %s), %s (total)',
+                            len(temp_response['events']), (i + 2), len(response['events']))
             return response['events']
         else:
+            log.error('No success field in response or success == false. %s', response['msg'])
             return "Error " + response['msg'] if 'msg' in response else ""
-        #return self.__router_request('EventsRouter', 'query', [data])
 
     def get_event_detail(self, event_id):
         '''Find specific event details

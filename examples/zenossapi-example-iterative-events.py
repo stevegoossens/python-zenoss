@@ -1,6 +1,11 @@
 #!/usr/local/env python
 
 from zenoss import Zenoss
+import logging
+logging.basicConfig(
+        filename='/var/log/python-zenoss.log',level=logging.INFO,
+        format='%(asctime)s %(message)s'
+        )
 
 HOST = 'https://server.domain.com'
 CERT = '/path/to/cert.pem'
