@@ -274,7 +274,7 @@ class Zenoss(object):
             return response['events']
         else:
             log.error('No success field in response or success == false. %s', response['msg'])
-            return "Error " + response['msg'] if 'msg' in response else ""
+            return None
 
     def get_event_detail(self, event_id):
         '''Find specific event details

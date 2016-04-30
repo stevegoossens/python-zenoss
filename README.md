@@ -1,7 +1,7 @@
 python-zenoss ![Build Status](https://travis-ci.org/iamseth/python-zenoss.png)
 =============
 
-Python module to work with the Zenoss JSON API
+Python module to work with the Zenoss JSON API (Fork)
 
 
 Installation
@@ -9,7 +9,7 @@ Installation
 
 ### PyPi
 ```bash
-pip install zenoss
+pip install zenoss-fork
 ```
 
 ### Manually
@@ -37,7 +37,7 @@ for device in zenoss.get_devices()['devices']:
 ```python
 from zenoss import Zenoss
 
-# create Zenoss instance
+# create Zenoss instance (ssl_verify = False is optional)
 zenoss = Zenoss(
     host = 'https://zenoss.host.com',
     cert = '/home/user/cert.pem',
