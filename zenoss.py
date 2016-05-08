@@ -7,6 +7,7 @@
 * changed get_events method to kwargs (to allow query params and other values)
 * changed get_events method to call API iteratively to get events in batches
   if there is a server-imposed query limit
+* added eventState enumeration
 '''
 
 import ast
@@ -35,6 +36,20 @@ class ZenossException(Exception):
     '''Custom exception for Zenoss
     '''
     pass
+
+
+class eventState:
+    """
+    eventState:
+    0 = New
+    1 = Acknowledged
+    2 = Suppressed
+    3 = Closed
+    4 = Cleared
+    5 = Dropped
+    6 = Aged
+    """
+    New, Acknowledged, Suppressed, Closed, Cleared, Dropped, Aged = range(7)
 
 
 class Zenoss(object):
