@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(name='zenoss-fork',
 
-version='0.6.2.2',
+version='0.7.0.0',
     description='Module to work with the Zenoss JSON API (Fork)',
     author="Steve Goossens",
     author_email='steve.goossens@gmail.com',

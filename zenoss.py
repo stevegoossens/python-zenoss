@@ -2,12 +2,12 @@
 
 [modification] Steve Goossens: 
 * added authentication by client cert
-* changed __init__ constructor to take kwargs (to allow auth by 
-  username/password or cert)
-* changed get_events method to kwargs (to allow query params and other values)
+* changed __init__ constructor to allow auth by username/password or cert
+* changed get_events method parameters to match query method
 * changed get_events method to call API iteratively to get events in batches
   if there is a server-imposed query limit
 * added eventState enumeration
+* added severity enumeration
 '''
 
 import ast
@@ -41,35 +41,45 @@ class ZenossException(Exception):
 class eventState:
     """
     eventState:
-    0 = New
-    1 = Acknowledged
-    2 = Suppressed
-    3 = Closed
-    4 = Cleared
-    5 = Dropped
-    6 = Aged
+    0 = new
+    1 = acknowledged
+    2 = suppressed
+    3 = closed
+    4 = cleared
+    5 = dropped
+    6 = aged
     """
-    New, Acknowledged, Suppressed, Closed, Cleared, Dropped, Aged = range(7)
+    new, acknowledged, suppressed, closed, cleared, dropped, aged = range(7)
+
+
+class severity:
+    """
+    0 = clear
+    1 = debug
+    2 = info
+    3 = warning
+    4 = error
+    5 = critical
+    """
+    clear, debug, info, warning, error, critical = range(6)
 
 
 class Zenoss(object):
     '''A class that represents a connection to a Zenoss server
     '''
-    def __init__(self, **kwargs):
-        self.__host = kwargs['host']
+    def __init__(self, host=None, username=None, password=None, cert=None, ssl_verify=True):
+        self.__host = host
         self.__session = requests.Session()
         # auth by username/password or client cert
-        if 'username' in kwargs and 'password' in kwargs:
-            self.__session.auth = (kwargs['username'], kwargs['password'])
-        elif 'cert' in kwargs:
-            self.__session.cert = kwargs['cert']
+        if username and password:
+            self.__session.auth = (username, password)
+        elif cert:
+            self.__session.cert = cert
         else:
             self.__session.auth = None
         # host SSL verification enable/disabled
-        if 'ssl_verify' in kwargs:
-            self.__session.verify = kwargs['ssl_verify']
-        else:
-            self.__session.verify = True
+        self.__session.verify = ssl_verify
+        # reset count
         self.__req_count = 0
 
     def __router_request(self, router, method, data=None):
@@ -252,20 +262,63 @@ class Zenoss(object):
         data = dict(uids=[device['uid']], hashcheck=device['hash'], ip=ip_address)
         return self.__router_request('DeviceRouter', 'resetIp', [data])
 
-    def get_events(self, **kwargs):
-        '''Find current events.
+    def get_events(self, limit=0, start=0, sort='lastTime', dir='DESC',
+            params={}, archive=False, uid=None, detailFormat=False):
+        """ Use EventsRouter action (Class) and query method found
+        in JSON API docs on Zenoss website:
 
-        '''
-        data = dict(
-                    start = kwargs['start'] if 'start' in kwargs else 0,
-                    limit = kwargs['limit'] if 'limit' in kwargs else 1000,
-                    dir = kwargs['dir'] if 'dir' in 'kwargs' else 'ASC',
-                    sort = kwargs['sort'] if 'sort' in kwargs else 'firstTime'
-                    )
-        data['params'] = kwargs['params'] if 'params' in kwargs else \
-                dict(severity=[5, 4, 3, 2], eventState=[0, 1])
+        query(self, limit=0, start=0, sort='lastTime', dir='desc', params=None, 
+        archive=False, uid=None, detailFormat=False)
+
+        Parameters:
+
+        limit (integer) - (optional) Max index of events to retrieve (default: 0)
+        start (integer) - (optional) Min index of events to retrieve (default: 0)
+        sort (string) - (optional) Key on which to sort the return results (default: 'lastTime')
+        dir (string) - (optional) Sort order; can be either 'ASC' or 'DESC' (default: 'DESC')
+        params (dictionary) - (optional) Key-value pair of filters for this search. (default: None)
+        params are the filters to the query method and can be found in the _buildFilter method.
+            agent = params.get('agent'), 
+            component = ???
+            count_range = params.get('count'), 
+            current_user_name = params.get('ownerid'), 
+            details = details, 
+            device = ???
+            element_sub_title = params.get('component'), 
+            element_title = params.get('device'), 
+            event_class = filter(None, [params.get('eventClass')]), 
+            event_summary = params.get('summary'), 
+            fingerprint = params.get('dedupid'), 
+                Note that the time values can be ranges where a valid range would be
+                '2012-09-07 07:57:33/2012-11-22 17:57:33'
+            first_seen = params.get('firstTime') and self._timeRange(params.get('firstTime')), 
+            last_seen = params.get('lastTime') and self._timeRange(params.get('lastTime')), 
+            monitor = params.get('monitor'), 
+            severity = params.get('severity'), 
+            status = [i for i in params.get('eventState', [])], 
+            status_change = params.get('stateChange') and self._timeRange(params.get('stateChange')), 
+            Systems (string) = 
+            tags = params.get('tags'), 
+            uuid = filterEventUuids, 
+        archive (boolean) - (optional) True to search the event history table instead of active events (default: False)
+        uid (string) - (optional) Context for the query (default: None)
+        detailFormat (boolean) - (optional) True to include/retrieve event detail instead of event summary(default: False)
+
+        Returns: dictionary
+        Properties:
+            events: ([dictionary]) List of objects representing events
+            totalCount: (integer) Total count of events returned
+            asof: (float) Current time
+        """
+
+        # prepare data by passing arguments
+        data = locals().copy()
+        del data["self"]
+
+        # query Zenoss
         log.info('Getting events for %s', data)
         response = self.__router_request('EventsRouter', 'query', [data])
+        # if a valid response, continue to check if further queries are required to get all events
         if 'success' in response and response['success'] == True:
             result_total_count = response['totalCount']
             result_count_in_initial_response = len(response['events'])
@@ -287,6 +340,7 @@ class Zenoss(object):
                     log.info('Events received: %s (iteration %s), %s (total)',
                             len(temp_response['events']), (i + 2), len(response['events']))
             return response['events']
+        # response was not valid
         else:
             log.error('No success field in response or success == false. %s', response['msg'])
             return None

@@ -1,13 +1,22 @@
 #!/usr/local/env python
 
-from zenoss import Zenoss
+from zenoss import Zenoss, eventState, severity
+import json
 
 # create Zenoss instance
 zenoss = Zenoss(
             host = 'https://zenoss.host.com',
-            cert = '/home/user/cert.pem',
+            cert = '/path/to/cert.pem',
             ssl_verify = False
             )
 
-# I just used an existing event to test the connection as working
-print zenoss.get_event_detail("e4115bd1-2290-a6f3-11e6-0568d53d97e4")
+# get events
+params = dict(
+        eventState = [eventState.new],
+        severity = [severity.critical],
+        Systems = '/ReleaseEnvironment/Live'
+        )
+events = zenoss.get_events(limit=1, sort='firstTime', dir='ASC', params=params, detailFormat=False)
+
+# display JSON
+print json.dumps(events, indent=2)
