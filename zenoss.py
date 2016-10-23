@@ -6,8 +6,8 @@
 * changed get_events method parameters to match query method
 * changed get_events method to call API iteratively to get events in batches
   if there is a server-imposed query limit
-* added eventState enumeration
-* added severity enumeration
+* added EventState enumeration
+* added EventSeverity enumeration
 '''
 
 import ast
@@ -38,7 +38,7 @@ class ZenossException(Exception):
     pass
 
 
-class eventState:
+class EventState:
     """
     eventState:
     0 = new
@@ -52,7 +52,7 @@ class eventState:
     new, acknowledged, suppressed, closed, cleared, dropped, aged = range(7)
 
 
-class severity:
+class EventSeverity:
     """
     0 = clear
     1 = debug
