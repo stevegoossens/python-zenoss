@@ -1,6 +1,6 @@
 #!/usr/local/env python
 
-from zenoss import Zenoss, eventState, severity
+from zenoss import Zenoss, EventState, EventSeverity
 import json
 
 # create Zenoss instance
@@ -12,8 +12,8 @@ zenoss = Zenoss(
 
 # get events
 params = dict(
-        eventState = [eventState.new],
-        severity = [severity.critical],
+        eventState = [EventState.new],
+        severity = [EventSeverity.critical],
         Systems = '/ReleaseEnvironment/Live'
         )
 events = zenoss.get_events(limit=1, sort='firstTime', dir='ASC', params=params, detailFormat=False)
