@@ -27,7 +27,7 @@ Usage
 ```python
 from zenoss import Zenoss
 
-zenoss = Zenoss('http://zenoss:8080/', 'admin', 'password')
+zenoss = Zenoss('http://zenoss:8080/', username = 'admin', password = 'password')
 
 for device in zenoss.get_devices()['devices']:
     print(device['name'])
@@ -38,11 +38,7 @@ for device in zenoss.get_devices()['devices']:
 from zenoss import Zenoss
 
 # create Zenoss instance (ssl_verify = False is optional)
-zenoss = Zenoss(
-    host = 'https://zenoss.host.com',
-    cert = '/home/user/cert.pem',
-    ssl_verify = False
-    )
+zenoss = Zenoss('https://zenoss.host.com', cert = '/home/user/cert.pem', ssl_verify = False)
 
 print zenoss.get_event_detail("e4115bd1-2290-a6f3-11e6-0568d53d97e4")
 ```
