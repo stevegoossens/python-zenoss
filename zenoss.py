@@ -64,6 +64,14 @@ class EventSeverity:
     clear, debug, info, warning, error, critical = range(6)
 
 
+class ProductionState:
+    production = 1000
+    pre_production = 500
+    test = 400
+    maintenance = 300
+    decommissioned = -1
+
+
 class Zenoss(object):
     '''A class that represents a connection to a Zenoss server
     '''
