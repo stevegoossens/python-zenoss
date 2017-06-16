@@ -524,6 +524,7 @@ class Zenoss(object):
 
     def create_event_on_device(self, device_name, severity, summary,
                                component='', evclasskey='', evclass=''):
+
         '''Manually create a new event for the device specified.
 
         '''
@@ -541,9 +542,9 @@ class Zenoss(object):
         data = dict(device=device_name,
                     summary=summary,
                     severity=severity,
-                    component='',
-                    evclasskey='',
-                    evclass='')
+                    component=component,
+                    evclasskey=evclasskey,
+                    evclass=evclass)
         return self.__router_request('EventsRouter', 'add_event', [data])
 
     def get_load_average(self, device):
